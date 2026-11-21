@@ -1,0 +1,19 @@
+flowchart TB
+ B["Navigateur FR / EN"] -->|"HTTP local : GET / POST + CSRF"| P["public/index.php : en-têtes, assets, session"]
+ P --> C["Controller::run : routes et authentification"]
+ C --> A["AuthService / Session / LoginLimiter"]
+ C --> H["AdvancedHRController"]
+ C --> K["CompensationController"]
+ C --> Y["PayrollController / SettlementController"]
+ C --> I["IAMController"]
+ H --> R["Repositories PDO"]
+ K --> R
+ Y --> R
+ I --> R
+ A --> D["MySQL : identité et RBAC"]
+ R --> S["Procédures SQL SECURITY DEFINER"]
+ R --> D
+ S --> M["Tables InnoDB, contraintes, triggers"]
+ C --> V["Vues PHP : h(), t(), Money::format"]
+ V --> B
+ C --> L["Journal technique privé"]

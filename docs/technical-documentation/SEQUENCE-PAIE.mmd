@@ -1,0 +1,36 @@
+sequenceDiagram
+ actor RH
+ actor Finance
+ actor Paie
+ actor Employe as Employée
+ participant Web as Contrôleurs PHP
+ participant Repo as Repository PDO
+ participant SQL as Procédures MySQL
+ participant DB as Tables InnoDB
+ RH->>Web: POST /compensation/new + CSRF
+ Web->>SQL: compensation_submit(..., acteur session)
+ SQL->>DB: Verrou employé, demande + événement
+ Finance->>Web: POST /compensation/{id}/decision
+ Web->>SQL: compensation_decide(...)
+ SQL->>DB: Indépendance, décision + salary_conditions
+ Paie->>Web: POST /payroll/calculate
+ Web->>Repo: calculate(période, employé, acteur)
+ Repo->>SQL: payroll_calculate
+ SQL->>DB: BEGIN, verrou employé, RBAC
+ SQL->>SQL: payroll_build : jours, salaires approuvés, ajustements
+ SQL->>DB: INSERT version + snapshot + SHA256, COMMIT
+ SQL-->>Repo: id du calcul
+ Repo-->>Web: id
+ Web-->>Paie: 303 /payslips/{id}
+ Paie->>Web: POST transition verified
+ Web->>SQL: Recalcul et contrôle de fraîcheur
+ Finance->>Web: POST transition approved
+ Web->>SQL: Indépendance, fraîcheur et approbation unique
+ Paie->>Web: POST transition published
+ Web->>SQL: Vérification approbation puis événement
+ Employe->>Web: GET /payslips/{id}
+ Web->>SQL: payslip_detail(id, acteur)
+ SQL-->>Web: Seulement bulletin propre publié
+ Finance->>Web: POST settlement action=pay
+ Web->>SQL: settlement_command : version attendue et solde SQL
+ SQL->>DB: Écriture fictive, référence unique, COMMIT

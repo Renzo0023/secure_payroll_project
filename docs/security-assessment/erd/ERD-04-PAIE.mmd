@@ -1,0 +1,78 @@
+---
+title: SecurePayroll — Paie et bulletins
+---
+erDiagram
+    payroll_periods {
+        bigint id PK
+        date month_start UK
+        decimal bonus_cap
+        decimal deduction_cap
+        varchar(2000) reason
+        bigint created_by FK "auteur → accounts"
+        bigint creator_employee_id FK "auteur → employees"
+        datetime(6) created_at
+    }
+    payroll_inputs {
+        bigint id PK
+        bigint period_id FK
+        bigint employee_id FK
+        varchar(16) kind
+        decimal amount "RESTREINT"
+        date starts_on
+        date ends_on
+        varchar(2000) reason
+        bigint created_by FK "auteur → accounts"
+        bigint creator_employee_id FK "auteur → employees"
+        datetime(6) created_at
+    }
+    payroll_input_decisions {
+        bigint id PK
+        bigint input_id FK, UK
+        varchar(16) decision
+        varchar(2000) reason
+        bigint decided_by FK "auteur → accounts"
+        bigint approver_employee_id FK "auteur → employees"
+        datetime(6) decided_at
+    }
+    payroll_calculations {
+        bigint id PK
+        bigint period_id FK, UK
+        bigint employee_id FK, UK
+        int version_no UK
+        varchar(40) algorithm
+        char(3) currency
+        decimal base_amount "RESTREINT"
+        decimal bonus_amount "RESTREINT"
+        decimal deduction_amount "RESTREINT"
+        decimal gross_amount "RESTREINT"
+        decimal net_amount "RESTREINT"
+        json snapshot "RESTREINT"
+        char(64) source_hash
+        bigint prepared_by FK "auteur → accounts"
+        bigint preparer_employee_id FK "auteur → employees"
+        datetime(6) prepared_at
+    }
+    payslip_events {
+        bigint id PK
+        bigint calculation_id FK, UK
+        varchar(16) event_type UK
+        varchar(2000) reason
+        bigint actor_id FK "auteur → accounts"
+        bigint actor_employee_id FK "auteur → employees"
+        datetime(6) occurred_at
+    }
+    payroll_approvals {
+        bigint calculation_id PK, FK
+        bigint period_id FK, UK
+        bigint employee_id FK, UK
+    }
+    employees {
+        bigint id PK "autre domaine"
+    }
+    payroll_periods ||--o{ payroll_inputs : "period_id"
+    employees ||--o{ payroll_inputs : "employee_id"
+    payroll_inputs ||--o| payroll_input_decisions : "input_id"
+    payroll_periods ||--o{ payroll_calculations : "period_id"
+    employees ||--o{ payroll_calculations : "employee_id"
+    payroll_calculations ||--o{ payslip_events : "calculation_id"
+    payroll_calculations ||--o| payroll_approvals : "calculation_id, period_id, employee_id"

@@ -1,0 +1,57 @@
+---
+title: SecurePayroll — Rémunération
+---
+erDiagram
+    compensation_requests {
+        bigint id PK
+        bigint employee_id FK
+        bigint contract_id FK
+        varchar(16) request_kind
+        decimal monthly_amount "RESTREINT"
+        char(3) currency
+        date effective_on
+        varchar(2000) justification
+        bigint requested_by FK "auteur → accounts"
+        bigint requester_employee_id FK "auteur → employees"
+        datetime(6) requested_at
+    }
+    compensation_decisions {
+        bigint id PK
+        bigint request_id FK, UK
+        varchar(16) decision
+        varchar(2000) reason
+        bigint decided_by FK "auteur → accounts"
+        bigint approver_employee_id FK "auteur → employees"
+        datetime(6) decided_at
+    }
+    salary_conditions {
+        bigint id PK
+        bigint employee_id FK, UK
+        bigint contract_id FK
+        bigint request_id FK, UK
+        bigint decision_id FK
+        decimal monthly_amount "RESTREINT"
+        char(3) currency
+        date effective_on UK
+        datetime(6) recorded_at
+    }
+    compensation_history {
+        bigint id PK
+        bigint request_id FK, UK
+        varchar(16) event_type UK
+        bigint actor_id FK "auteur → accounts"
+        datetime(6) occurred_at
+    }
+    employees {
+        bigint id PK "autre domaine"
+    }
+    employment_contracts {
+        bigint id PK "autre domaine"
+    }
+    employees ||--o{ compensation_requests : "employee_id"
+    employment_contracts ||--o{ compensation_requests : "contract_id"
+    compensation_requests ||--o| compensation_decisions : "request_id"
+    employees ||--o{ salary_conditions : "employee_id"
+    employment_contracts ||--o{ salary_conditions : "contract_id"
+    compensation_decisions ||--o| salary_conditions : "request_id, decision_id"
+    compensation_requests ||--o{ compensation_history : "request_id"

@@ -1,0 +1,53 @@
+---
+title: SecurePayroll — Organisation RH
+---
+erDiagram
+    departments {
+        bigint id PK
+        varchar(32) code UK
+        varchar(120) name_fr
+        varchar(120) name_en
+        datetime(6) archived_at "NULL"
+    }
+    positions {
+        bigint id PK
+        varchar(32) code UK
+        varchar(120) name_fr
+        varchar(120) name_en
+        datetime(6) archived_at "NULL"
+    }
+    employee_assignments {
+        bigint id PK
+        bigint employee_id FK
+        bigint department_id FK
+        bigint position_id FK
+        date starts_on
+        date ends_on "NULL"
+        date closed_on "NULL"
+        date effective_ends_on "calculée · NULL"
+        datetime(6) created_at
+        bigint created_by FK "auteur → accounts"
+        datetime(6) closed_at "NULL"
+        bigint closed_by FK "NULL · auteur → accounts"
+    }
+    employment_contracts {
+        bigint id PK
+        bigint employee_id FK
+        varchar(64) reference UK
+        varchar(16) contract_type
+        date starts_on
+        date ends_on "NULL"
+        date closed_on "NULL"
+        date effective_ends_on "calculée · NULL"
+        datetime(6) created_at
+        bigint created_by FK "auteur → accounts"
+        datetime(6) closed_at "NULL"
+        bigint closed_by FK "NULL · auteur → accounts"
+    }
+    employees {
+        bigint id PK "autre domaine"
+    }
+    employees ||--o{ employee_assignments : "employee_id"
+    departments ||--o{ employee_assignments : "department_id"
+    positions ||--o{ employee_assignments : "position_id"
+    employees ||--o{ employment_contracts : "employee_id"

@@ -1,0 +1,311 @@
+erDiagram
+    employees {
+        bigint id
+        varchar employee_number
+        varchar first_name
+        varchar last_name
+        datetime created_at
+        datetime archived_at
+    }
+    accounts {
+        bigint id
+        bigint employee_id
+        varchar login
+        varchar password_hash
+        datetime created_at
+        datetime disabled_at
+    }
+    roles {
+        bigint id
+        varchar code
+        varchar name
+    }
+    permissions {
+        bigint id
+        varchar code
+        varchar description
+    }
+    role_permissions {
+        bigint role_id
+        bigint permission_id
+    }
+    role_assignments {
+        bigint id
+        bigint account_id
+        bigint role_id
+        bigint granted_by_account_id
+        datetime granted_at
+        datetime valid_from
+        datetime expires_at
+        varchar grant_reason
+        datetime revoked_at
+        bigint revoked_by_account_id
+        varchar revocation_reason
+    }
+    departments {
+        bigint id
+        varchar code
+        varchar name_fr
+        varchar name_en
+        datetime archived_at
+    }
+    positions {
+        bigint id
+        varchar code
+        varchar name_fr
+        varchar name_en
+        datetime archived_at
+    }
+    employee_assignments {
+        bigint id
+        bigint employee_id
+        bigint department_id
+        bigint position_id
+        date starts_on
+        date ends_on
+        date closed_on
+        date effective_ends_on
+        datetime created_at
+        bigint created_by
+        datetime closed_at
+        bigint closed_by
+    }
+    employment_contracts {
+        bigint id
+        bigint employee_id
+        varchar reference
+        varchar contract_type
+        date starts_on
+        date ends_on
+        date closed_on
+        date effective_ends_on
+        datetime created_at
+        bigint created_by
+        datetime closed_at
+        bigint closed_by
+    }
+    compensation_requests {
+        bigint id
+        bigint employee_id
+        bigint contract_id
+        varchar request_kind
+        decimal monthly_amount
+        char currency
+        date effective_on
+        varchar justification
+        bigint requested_by
+        bigint requester_employee_id
+        datetime requested_at
+    }
+    compensation_decisions {
+        bigint id
+        bigint request_id
+        varchar decision
+        varchar reason
+        bigint decided_by
+        bigint approver_employee_id
+        datetime decided_at
+    }
+    salary_conditions {
+        bigint id
+        bigint employee_id
+        bigint contract_id
+        bigint request_id
+        bigint decision_id
+        decimal monthly_amount
+        char currency
+        date effective_on
+        datetime recorded_at
+    }
+    compensation_history {
+        bigint id
+        bigint request_id
+        varchar event_type
+        bigint actor_id
+        datetime occurred_at
+    }
+    payroll_periods {
+        bigint id
+        date month_start
+        decimal bonus_cap
+        decimal deduction_cap
+        varchar reason
+        bigint created_by
+        bigint creator_employee_id
+        datetime created_at
+    }
+    payroll_inputs {
+        bigint id
+        bigint period_id
+        bigint employee_id
+        varchar kind
+        decimal amount
+        date starts_on
+        date ends_on
+        varchar reason
+        bigint created_by
+        bigint creator_employee_id
+        datetime created_at
+    }
+    payroll_input_decisions {
+        bigint id
+        bigint input_id
+        varchar decision
+        varchar reason
+        bigint decided_by
+        bigint approver_employee_id
+        datetime decided_at
+    }
+    payroll_calculations {
+        bigint id
+        bigint period_id
+        bigint employee_id
+        int version_no
+        varchar algorithm
+        char currency
+        decimal base_amount
+        decimal bonus_amount
+        decimal deduction_amount
+        decimal gross_amount
+        decimal net_amount
+        json snapshot
+        char source_hash
+        bigint prepared_by
+        bigint preparer_employee_id
+        datetime prepared_at
+    }
+    payslip_events {
+        bigint id
+        bigint calculation_id
+        varchar event_type
+        varchar reason
+        bigint actor_id
+        bigint actor_employee_id
+        datetime occurred_at
+    }
+    payroll_approvals {
+        bigint calculation_id
+        bigint period_id
+        bigint employee_id
+    }
+    payslip_corrections {
+        bigint id
+        bigint calculation_id
+        bigint parent_id
+        int revision
+        decimal base_amount
+        decimal bonus_amount
+        decimal deduction_amount
+        decimal gross_amount
+        decimal net_amount
+        char currency
+        varchar reason
+        bigint prepared_by
+        bigint preparer_employee_id
+        datetime prepared_at
+    }
+    correction_events {
+        bigint id
+        bigint correction_id
+        varchar event_type
+        varchar reason
+        bigint actor_id
+        bigint actor_employee_id
+        datetime occurred_at
+    }
+    recovery_requests {
+        bigint id
+        bigint calculation_id
+        bigint correction_id
+        decimal amount
+        varchar reason
+        bigint requested_by
+        bigint requester_employee_id
+        datetime requested_at
+    }
+    recovery_events {
+        bigint id
+        bigint request_id
+        varchar event_type
+        varchar reason
+        bigint actor_id
+        bigint actor_employee_id
+        datetime occurred_at
+    }
+    settlement_ledger {
+        bigint id
+        bigint calculation_id
+        bigint correction_id
+        bigint recovery_id
+        varchar entry_type
+        decimal amount
+        char currency
+        varchar reference
+        varchar reason
+        bigint actor_id
+        bigint actor_employee_id
+        datetime occurred_at
+    }
+    employees ||--o| accounts : "employee_id -> id"
+    roles ||--o{ role_permissions : "role_id -> id"
+    permissions ||--o{ role_permissions : "permission_id -> id"
+    accounts ||--o{ role_assignments : "account_id -> id"
+    roles ||--o{ role_assignments : "role_id -> id"
+    accounts |o--o{ role_assignments : "granted_by_account_id -> id"
+    accounts |o--o{ role_assignments : "revoked_by_account_id -> id"
+    employees ||--o{ employee_assignments : "employee_id -> id"
+    departments ||--o{ employee_assignments : "department_id -> id"
+    positions ||--o{ employee_assignments : "position_id -> id"
+    accounts ||--o{ employee_assignments : "created_by -> id"
+    accounts |o--o{ employee_assignments : "closed_by -> id"
+    employees ||--o{ employment_contracts : "employee_id -> id"
+    accounts ||--o{ employment_contracts : "created_by -> id"
+    accounts |o--o{ employment_contracts : "closed_by -> id"
+    employees ||--o{ compensation_requests : "employee_id -> id"
+    employment_contracts ||--o{ compensation_requests : "contract_id -> id"
+    accounts ||--o{ compensation_requests : "requested_by -> id"
+    employees ||--o{ compensation_requests : "requester_employee_id -> id"
+    compensation_requests ||--o| compensation_decisions : "request_id -> id"
+    accounts ||--o{ compensation_decisions : "decided_by -> id"
+    employees ||--o{ compensation_decisions : "approver_employee_id -> id"
+    employees ||--o{ salary_conditions : "employee_id -> id"
+    employment_contracts ||--o{ salary_conditions : "contract_id -> id"
+    compensation_decisions ||--o{ salary_conditions : "request_id,decision_id -> request_id,id"
+    compensation_requests ||--o{ compensation_history : "request_id -> id"
+    accounts ||--o{ compensation_history : "actor_id -> id"
+    accounts ||--o{ payroll_periods : "created_by -> id"
+    employees ||--o{ payroll_periods : "creator_employee_id -> id"
+    payroll_periods ||--o{ payroll_inputs : "period_id -> id"
+    employees ||--o{ payroll_inputs : "employee_id -> id"
+    accounts ||--o{ payroll_inputs : "created_by -> id"
+    employees ||--o{ payroll_inputs : "creator_employee_id -> id"
+    payroll_inputs ||--o| payroll_input_decisions : "input_id -> id"
+    accounts ||--o{ payroll_input_decisions : "decided_by -> id"
+    employees ||--o{ payroll_input_decisions : "approver_employee_id -> id"
+    payroll_periods ||--o{ payroll_calculations : "period_id -> id"
+    employees ||--o{ payroll_calculations : "employee_id -> id"
+    accounts ||--o{ payroll_calculations : "prepared_by -> id"
+    employees ||--o{ payroll_calculations : "preparer_employee_id -> id"
+    payroll_calculations ||--o{ payslip_events : "calculation_id -> id"
+    accounts ||--o{ payslip_events : "actor_id -> id"
+    employees ||--o{ payslip_events : "actor_employee_id -> id"
+    payroll_calculations ||--o{ payroll_approvals : "calculation_id,period_id,employee_id -> id,period_id,employee_id"
+    payroll_calculations ||--o{ payslip_corrections : "calculation_id -> id"
+    payslip_corrections |o--o{ payslip_corrections : "parent_id,calculation_id -> id,calculation_id"
+    accounts ||--o{ payslip_corrections : "prepared_by -> id"
+    employees ||--o{ payslip_corrections : "preparer_employee_id -> id"
+    payslip_corrections ||--o{ correction_events : "correction_id -> id"
+    accounts ||--o{ correction_events : "actor_id -> id"
+    employees ||--o{ correction_events : "actor_employee_id -> id"
+    payroll_calculations ||--o{ recovery_requests : "calculation_id -> id"
+    payslip_corrections |o--o{ recovery_requests : "correction_id,calculation_id -> id,calculation_id"
+    accounts ||--o{ recovery_requests : "requested_by -> id"
+    employees ||--o{ recovery_requests : "requester_employee_id -> id"
+    recovery_requests ||--o{ recovery_events : "request_id -> id"
+    accounts ||--o{ recovery_events : "actor_id -> id"
+    employees ||--o{ recovery_events : "actor_employee_id -> id"
+    payroll_calculations ||--o{ settlement_ledger : "calculation_id -> id"
+    payslip_corrections |o--o{ settlement_ledger : "correction_id,calculation_id -> id,calculation_id"
+    recovery_requests |o--o| settlement_ledger : "recovery_id -> id"
+    accounts ||--o{ settlement_ledger : "actor_id -> id"
+    employees ||--o{ settlement_ledger : "actor_employee_id -> id"

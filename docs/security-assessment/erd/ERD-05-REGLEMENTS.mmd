@@ -1,0 +1,74 @@
+---
+title: SecurePayroll — Règlements et corrections
+---
+erDiagram
+    payslip_corrections {
+        bigint id PK
+        bigint calculation_id FK, UK
+        bigint parent_id FK "NULL"
+        int revision UK
+        decimal base_amount "RESTREINT"
+        decimal bonus_amount "RESTREINT"
+        decimal deduction_amount "RESTREINT"
+        decimal gross_amount "RESTREINT"
+        decimal net_amount "RESTREINT"
+        char(3) currency
+        varchar(2000) reason
+        bigint prepared_by FK "auteur → accounts"
+        bigint preparer_employee_id FK "auteur → employees"
+        datetime(6) prepared_at
+    }
+    correction_events {
+        bigint id PK
+        bigint correction_id FK, UK
+        varchar(16) event_type UK
+        varchar(2000) reason
+        bigint actor_id FK "auteur → accounts"
+        bigint actor_employee_id FK "auteur → employees"
+        datetime(6) occurred_at
+    }
+    recovery_requests {
+        bigint id PK
+        bigint calculation_id FK
+        bigint correction_id FK "NULL"
+        decimal amount "RESTREINT"
+        varchar(2000) reason
+        bigint requested_by FK "auteur → accounts"
+        bigint requester_employee_id FK "auteur → employees"
+        datetime(6) requested_at
+    }
+    recovery_events {
+        bigint id PK
+        bigint request_id FK, UK
+        varchar(16) event_type UK
+        varchar(2000) reason
+        bigint actor_id FK "auteur → accounts"
+        bigint actor_employee_id FK "auteur → employees"
+        datetime(6) occurred_at
+    }
+    settlement_ledger {
+        bigint id PK
+        bigint calculation_id FK
+        bigint correction_id FK "NULL"
+        bigint recovery_id FK, UK "NULL"
+        varchar(16) entry_type
+        decimal amount "RESTREINT"
+        char(3) currency
+        varchar(64) reference UK
+        varchar(2000) reason
+        bigint actor_id FK "auteur → accounts"
+        bigint actor_employee_id FK "auteur → employees"
+        datetime(6) occurred_at
+    }
+    payroll_calculations {
+        bigint id PK "autre domaine"
+    }
+    payroll_calculations ||--o{ payslip_corrections : "calculation_id"
+    payslip_corrections |o--o{ payslip_corrections : "parent_id, calculation_id"
+    payslip_corrections ||--o{ correction_events : "correction_id"
+    payroll_calculations ||--o{ recovery_requests : "calculation_id"
+    payslip_corrections |o--o{ recovery_requests : "correction_id, calculation_id"
+    recovery_requests ||--o{ recovery_events : "request_id"
+    payroll_calculations ||--o{ settlement_ledger : "calculation_id"
+    payslip_corrections |o--o{ settlement_ledger : "correction_id, calculation_id"
+    recovery_requests |o--o| settlement_ledger : "recovery_id"

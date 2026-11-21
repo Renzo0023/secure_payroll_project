@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "checks": 58,
+  "primary_connected": false,
+  "mysql_version": "8.4.13-0ubuntu0.26.04.2",
+  "tables": 25,
+  "procedures": 24,
+  "triggers": 42,
+  "permissions": 31,
+  "http_roles": 6,
+  "nadia_net": "11200.00",
+  "currency": "MAD",
+  "date_utc": "2026-11-15",
+  "php_version": "8.5.4",
+  "offline_checks": {
+    "sql_static": 93,
+    "compensation": 45,
+    "calculator": 17,
+    "calendar": 23,
+    "authorization_validation_rendering": 211,
+    "total": 389
+  },
+  "source_business_files_unchanged": 93,
+  "clean_clone_validation": {
+    "passed": true,
+    "checks": 58,
+    "source_commit": "587ab2d77e0f6675b9e091ce2014c959a52002e6",
+    "private_files_absent": true,
+    "primary_connected": false
+  },
+  "secret_audit_barrier_checks": 8
+}

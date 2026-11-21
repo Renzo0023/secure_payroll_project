@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "scope": "working publication candidates, index, all local Git objects",
+  "candidate_files": 231,
+  "reachable_commits": 1,
+  "git_objects": 269,
+  "git_blobs": 232,
+  "findings": [],
+  "private_files_unreadable_and_excluded": [
+    "storage/mad-repair-20261106T184209Z/applied.json"
+  ],
+  "reviewed_non_secrets": [
+    "Chaîne volontairement invalide du test de refus pour utilisateur inexistant",
+    "Empreinte Argon2id publique de travail constant, sans compte associé"
+  ],
+  "limits": "Pattern-based and path-based checks, not a proof of absence of every possible secret; ignored runtime/backups are not published."
+}
