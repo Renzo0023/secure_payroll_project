@@ -111,7 +111,7 @@ succès, conserver ce contrat : la création a fonctionné, aucun nouvel essai n
 nécessaire. Sinon, lire immédiatement la dernière ligne :
 
 ```sh
-cd ~/projects/database-security
+cd secure_payroll_project
 grep '"operation":"contract.create"' storage/logs/application.log | tail -n 1
 ```
 
@@ -170,7 +170,7 @@ La procédure COMMIT précède le retour de l’identifiant au PHP.
 5. Lire uniquement la dernière ligne du diagnostic dans le terminal :
 
    ```sh
-   cd ~/projects/database-security
+   cd secure_payroll_project
    grep '"operation":"contract.create"' storage/logs/application.log | tail -n 1
    ```
 

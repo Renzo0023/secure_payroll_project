@@ -3,7 +3,7 @@
 ## Commandes minimales après revue
 
 ```sh
-cd ~/projects/database-security
+cd secure_payroll_project
 sudo python3 bin/local-demo.py install --apply
 python3 bin/local-demo.py check
 python3 bin/local-demo.py serve

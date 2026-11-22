@@ -1,5 +1,7 @@
 # Préparation de publication privée — SecurePayroll
 
+> **Mise à jour du 22 novembre 2026.** Le dépôt de référence est désormais **https://github.com/Renzo0023/secure_payroll_project** (public), et le dossier du projet s'appelle `secure_payroll_project`. Les mentions de `bymelwine/securepayroll` ci-dessous décrivent la préparation historique de la publication et ne sont plus la destination à utiliser.
+
 ## Destination et statut
 
 Destination demandée : **bymelwine/securepayroll**, visibilité **privée**. La préparation locale et les tests sont réalisés. La branche locale `main` et la destination `origin=https://github.com/bymelwine/securepayroll.git` sont préparées ; un premier commit propre a été validé depuis un clone local indépendant. Le propriétaire a confirmé le 15 novembre 2026 la création du dépôt GitHub privé à cette adresse. Il ne faut pas recréer ce dépôt. Le push doit encore être effectué avec un accès GitHub authentifié, puis confirmé par comparaison des références distantes ; sa réussite ne doit pas être déduite de la seule présence de origin.

@@ -25,7 +25,7 @@ identités opérationnelles sont distinctes de Nadia et ne cumulent pas leurs r�
 Dans **votre propre terminal Ubuntu**, comme utilisateur habituel, sans sudo :
 
 ```bash
-cd /home/projets/projects/database-security
+cd secure_payroll_project
 python3 bin/demo-passwords.py
 ```
 
@@ -148,7 +148,7 @@ serveur si l’adresse répond déjà. Si le serveur a été arrêté, le relanc
 un terminal normal avec saisie privée du secret MySQL :
 
 ```bash
-cd /home/projets/projects/database-security
+cd secure_payroll_project
 SETTLEMENT_ENABLED=1 IAM_ENABLED=1 python3 bin/local-demo.py serve
 ```
 

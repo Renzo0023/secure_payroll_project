@@ -23,7 +23,7 @@ les autres producteurs d'écritures et de DDL. Garder cette maintenance jusqu'à
 fin des contrôles. Dans le même terminal pour les commandes suivantes :
 
 ```bash
-cd /home/projets/projects/database-security
+cd secure_payroll_project
 sudo python3 bin/mad-repair.py inspect
 umask 077
 mad_backup_dir="$PWD/storage/mad-repair-$(date -u +%Y%m%dT%H%M%SZ)"

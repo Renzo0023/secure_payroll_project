@@ -38,9 +38,26 @@ Les versions effectivement testées figurent dans [le rapport d’installation](
 Le dépôt est public ; le cloner directement suffit. Aucune donnée MySQL ni aucun secret n'y figure : chaque personne génère sa propre instance locale et ses propres mots de passe.
 
 ```bash
-git clone https://github.com/bymelwine/securepayroll.git
-cd securepayroll
+git clone https://github.com/Renzo0023/secure_payroll_project.git
+cd secure_payroll_project
 python3 bin/init-local.py
+```
+
+Le dépôt de référence est **https://github.com/Renzo0023/secure_payroll_project** et le dossier du projet s'appelle **`secure_payroll_project`**. Toutes les commandes de ce guide se lancent depuis la racine de ce dossier ; les chemins relatifs (`.local/`, `bin/`, `tests/`…) y sont rattachés. Le chemin complet du clone ne doit contenir ni espace ni caractère spécial (voir « Dépannage »).
+
+```text
+secure_payroll_project/
+├── app/            backend PHP (contrôleurs, dépôts, sécurité, vues)
+├── public/         point d'entrée web (index.php) et assets CSS/JS
+├── lang/           traductions fr / en
+├── config/         configuration générique (lue depuis les variables DB_*)
+├── database/       migrations, seeds, setup (rôles et GRANT), patches, audits
+├── bin/            installateur init-local.py et scripts d'exploitation
+├── tests/          recettes hors connexion et sur instance jetable
+├── lab/            laboratoire (injection SQL, démonstrations isolées)
+├── docs/           évaluation de sécurité, documentation technique, guides
+├── storage/logs/   répertoire vide versionné (journaux hors Git)
+└── .local/         instance MySQL privée et secrets, créés à l'installation, jamais versionnés
 ```
 
 L’initialisation prend quelques minutes. Elle refuse un `.local/` déjà présent, initialise un datadir neuf, démarre MySQL **sans réseau**, confirme le datadir, la version et le port zéro, puis réutilise les migrations, seeds et GRANT existants. Elle installe **28 tables, 31 procédures, 53 triggers, 31 permissions et six rôles applicatifs**, remplace les privilèges directs du service PDO par **12 rôles MySQL** (`database/setup/app_roles.sql`, `operator_roles.sql`, `onboarding_grants.sql`), crée les comptes locaux, les trois comptes d’exploitation MySQL et le jeu fictif, puis arrête son propre serveur en conservant les données.
@@ -122,6 +139,7 @@ php tests/login-limiter.php
 php tests/access-history-unit.php
 php tests/onboarding-unit.php
 php tests/secure-coding-static.php
+php tests/field-cipher-unit.php
 python3 bin/generate-erd.py --check
 ```
 
@@ -202,7 +220,7 @@ L’audit contrôle les fichiers publiables, l’index et tous les objets Git sa
 - Erreur 503 sur toutes les pages après la mise à jour de la phase 2 : l’instance `.local/` date d’avant les rôles MySQL. La conserver sous un autre nom et en installer une neuve (nouveaux mots de passe, jeu fictif remis à zéro) : `python3 bin/init-local.py stop && mv .local .local.avant-phase2 && python3 bin/init-local.py init`.
 - Lire en privé `.local/initialize.log`, `.local/mysql.log` et `.local/runtime/application.log`. Ne jamais partager `admin.json`, `application.json`, `credentials.json` ou `operators.json`.
 - MySQL absent/autre version : installer MySQL 8.4, pas MariaDB.
-- « mysqld ne peut pas écrire… (AppArmor probable) » : sur Ubuntu, le profil AppArmor `/usr/sbin/mysqld` limite le serveur à `/var/lib/mysql` et `/tmp`. Le refus est visible avec `journalctl -k | grep 'apparmor="DENIED".*mysqld'`. L’administrateur du poste autorise alors **uniquement** le répertoire privé du clone, dans le fichier local prévu par le profil, puis recharge celui-ci :
+- « mysqld ne peut pas écrire… (AppArmor probable) » : sur Ubuntu, le profil AppArmor `/usr/sbin/mysqld` limite le serveur à `/var/lib/mysql` et `/tmp`. Le refus est visible avec `journalctl -k | grep 'apparmor="DENIED".*mysqld'`. L’administrateur du poste autorise alors **uniquement** le répertoire privé du clone, dans le fichier local prévu par le profil, puis recharge celui-ci (commande à lancer depuis la racine `secure_payroll_project/`, car elle utilise `$PWD`) :
 
   ```bash
   printf '  %s/ rw,\n  %s/** rwk,\n' "$PWD/.local" "$PWD/.local" | sudo tee -a /etc/apparmor.d/local/usr.sbin.mysqld

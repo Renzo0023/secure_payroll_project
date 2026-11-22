@@ -5,7 +5,7 @@
 Depuis le terminal Ubuntu permettant l’authentification sudo :
 
 ```sh
-cd ~/projects/database-security
+cd secure_payroll_project
 sudo python3 bin/local-demo.py activate-hr --apply --with-demo-catalogues
 ```
 

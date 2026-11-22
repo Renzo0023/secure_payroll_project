@@ -27,7 +27,7 @@ Le lanceur existant `bin/local-demo.py` applique, après contrôles et confirmat
 Après revue et validation de ces fichiers, arrêter le serveur PHP dans son terminal avec Ctrl+C, puis :
 
 ```bash
-cd ~/projects/database-security
+cd secure_payroll_project
 sudo python3 bin/local-demo.py activate-compensation --apply
 ```
 

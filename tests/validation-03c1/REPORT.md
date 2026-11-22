@@ -106,7 +106,7 @@ Depuis le projet, avec l’environnement privé et le profil client préexistant
 décrits dans FINAL-REVIEW.md, sous un utilisateur ordinaire :
 
 ```sh
-cd ~/projects/database-security
+cd secure_payroll_project
 python3 tests/validation-03c1/validate.py --run
 ```
 
