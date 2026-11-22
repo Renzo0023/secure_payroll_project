@@ -1,0 +1,17 @@
+---
+title: SecurePayroll — Journalisation et audit
+---
+erDiagram
+    security_audit_log {
+        bigint id PK
+        datetime(6) occurred_at
+        varchar(64) event
+        enum outcome
+        enum source
+        bigint actor_account_id "NULL"
+        varchar(100) actor_label "NULL"
+        varchar(97) db_user
+        varchar(64) target_table "NULL"
+        bigint target_id "NULL"
+        json context "NULL"
+    }

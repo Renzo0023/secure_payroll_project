@@ -75,7 +75,8 @@ final class PersonalDataRepository
                 // Index aveugle unique : ce RIB est déjà enregistré (indice de fraude : deux salaires, un compte).
                 return 'personal.rib_duplicate';
             }
-            if (str_contains((string) $error->getMessage(), 'PDATA_NO_RECORD')) {
+            // Texte du SIGNAL comparé à un code fixe, jamais affiché ni journalisé.
+            if (($error->errorInfo[2] ?? '') === 'PDATA_NO_RECORD') {
                 return 'personal.no_record';
             }
             throw $error;

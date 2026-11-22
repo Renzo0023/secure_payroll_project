@@ -55,6 +55,8 @@ const REVIEWED = [
         => 'Choix entre deux littéraux.',
     'app/HR/PeriodRepository.php|$kind===\'assignments\'?\'CALL hr_close_assignment(?,?,?)\':\'CALL hr_close_contract(?,?,?)\''
         => 'Choix entre deux littéraux.',
+    'app/Web/Controller.php|\'SET @audit_actor = \'.(int)$user[\'account_id\']'
+        => 'Phase 7 : identifiant du compte relu en base par currentUser(), forcé en entier par (int) ; aucune saisie.',
 ];
 
 $files = [];
@@ -139,7 +141,8 @@ $verify($sinks === $literal + $dynamic && $sinks >= 30,
 // 3. Gestion sécurisée des erreurs : aucun détail technique ne sort.
 // errorInfo[2] porte le texte des SIGNAL des procédures (PAY_FORBIDDEN, IAM_CONFLICT…) : ces contrôleurs revus
 // le comparent à des codes fixes pour choisir une clé de traduction, sans jamais l'afficher ni le journaliser.
-const SIGNAL_MAPPERS = ['app/Web/AdvancedHRController.php', 'app/Web/CompensationController.php', 'app/Web/IAMController.php',
+// PersonalDataRepository (phase 6) reconnaît de la même façon PDATA_NO_RECORD.
+const SIGNAL_MAPPERS = ['app/HR/PersonalDataRepository.php', 'app/Web/AdvancedHRController.php', 'app/Web/CompensationController.php', 'app/Web/IAMController.php',
     'app/Web/PayrollController.php', 'app/Web/SettlementController.php'];
 $mappers = [];
 $leaking = [];
@@ -165,7 +168,7 @@ foreach ($files as $path) {
 $verify($leaking === [], 'Aucun message d’exception ni trace dans app/ et public/ : ' . implode(', ', $leaking));
 $verify($printing === [], 'Texte d’erreur SQL jamais affiché ni journalisé : ' . implode(', ', $printing));
 sort($mappers);
-$verify($mappers === SIGNAL_MAPPERS, 'errorInfo[2] lu uniquement par les 5 contrôleurs revus : ' . implode(', ', $mappers));
+$verify($mappers === SIGNAL_MAPPERS, 'errorInfo[2] lu uniquement par les 6 fichiers revus : ' . implode(', ', $mappers));
 $bootstrap = (string) file_get_contents($root . '/app/bootstrap.php');
 $verify(str_contains($bootstrap, "ini_set('display_errors', '0');") && str_contains($bootstrap, 'set_exception_handler('),
     'display_errors désactivé ; gestionnaire d’exceptions global');

@@ -87,6 +87,9 @@ erDiagram
     settlement_ledger {
         bigint id PK
     }
+    security_audit_log {
+        bigint id PK
+    }
     employees ||--o| employee_personal_data : "employee_id"
     employees ||--o| accounts : "employee_id"
     roles ||--o{ role_permissions : "role_id"

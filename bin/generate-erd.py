@@ -13,7 +13,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS = ROOT / 'database/migrations'
 OUTPUT = ROOT / 'docs/security-assessment/erd'
-EXPECTED_TABLES = 27
+EXPECTED_TABLES = 28
 
 DOMAINS = {
     '01-IDENTITE-RBAC': ('Identité, données personnelles et RBAC',
@@ -30,6 +30,8 @@ DOMAINS = {
     '05-REGLEMENTS': ('Règlements et corrections',
                       ['payslip_corrections', 'correction_events', 'recovery_requests', 'recovery_events',
                        'settlement_ledger']),
+    # Phase 7 (migration 016) : piste d'audit en ajout seul, sans clé étrangère par conception.
+    '06-AUDIT': ('Journalisation et audit', ['security_audit_log']),
 }
 
 # Colonnes classées « Restreint » (docs/security-assessment/02-CLASSIFICATION-DES-DONNEES.md).
@@ -82,14 +84,19 @@ def parse():
     for path in sorted(MIGRATIONS.glob('*.sql')):
         sql = re.sub(r'--[^\n]*', '', path.read_text())
         for name, body in re.findall(r'CREATE TABLE (\w+) \((.*?)\n\) ENGINE', sql, re.S):
-            table = {'columns': {}, 'order': [], 'pk': [], 'unique': [], 'fks': [], 'source': path.name}
+            table = {'columns': {}, 'order': [], 'pk': [], 'unique': [], 'unique_names': {}, 'fks': [],
+                     'source': path.name}
             for item in split_top_level(body):
                 item = re.sub(r'\s+', ' ', item)
+                constraint = re.match(r'CONSTRAINT (\w+) ', item)
                 item = re.sub(r'^CONSTRAINT \w+ ', '', item)
                 if item.startswith('PRIMARY KEY'):
                     table['pk'] = columns_of(re.search(r'\((.*)\)', item)[1])
                 elif re.match(r'UNIQUE', item):
-                    table['unique'].append(columns_of(re.search(r'\(([^)]*)\)', item)[1]))
+                    columns = columns_of(re.search(r'\(([^)]*)\)', item)[1])
+                    table['unique'].append(columns)
+                    if constraint:
+                        table['unique_names'][constraint[1]] = columns
                 elif item.startswith('FOREIGN KEY'):
                     match = re.match(r'FOREIGN KEY ?\(([^)]*)\) REFERENCES (\w+) ?\(([^)]*)\)', item)
                     table['fks'].append({'columns': columns_of(match[1]), 'parent': match[2],
@@ -117,6 +124,16 @@ def parse():
                 column = tables[name]['columns'][match[1]]
                 column['type'] = match[2].lower()
                 column['nullable'] = 'NOT NULL' not in match[3].upper()
+            # Contraintes d'unicité retirées ou ajoutées (ex. migration 015 : unicité portée par les index aveugles).
+            table = tables[name]
+            for match in re.finditer(r'DROP (?:INDEX|KEY) (\w+)', body):
+                columns = table['unique_names'].pop(match[1], None)
+                if columns is not None:
+                    table['unique'].remove(columns)
+            for match in re.finditer(r'ADD CONSTRAINT (\w+) UNIQUE (?:KEY |INDEX )?\(([^)]*)\)', body):
+                columns = columns_of(match[2])
+                table['unique'].append(columns)
+                table['unique_names'][match[1]] = columns
     return tables
 
 
@@ -162,7 +179,8 @@ def relation_line(name, table, fk):
 
 def attribute_line(name, table, column):
     info = table['columns'][column]
-    kind = re.sub(r'\(.*\)', '', info['type']) if info['type'].startswith('decimal') else info['type']
+    # Mermaid refuse virgules, espaces et guillemets dans un type : decimal(12,2) → decimal, enum('a', 'b') → enum.
+    kind = re.sub(r'\(.*\)', '', info['type']) if info['type'].startswith(('decimal', 'enum')) else info['type']
     keys = []
     if column in table['pk']:
         keys.append('PK')

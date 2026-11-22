@@ -98,6 +98,9 @@ erDiagram
     settlement_ledger {
         bigint id PK
     }
+    security_audit_log {
+        bigint id PK
+    }
     employees ||--o| employee_personal_data : "employee_id"
     employees ||--o| accounts : "employee_id"
     roles ||--o{ role_permissions : "role_id"
@@ -153,9 +156,9 @@ erDiagram
     }
     employee_personal_data {
         bigint employee_id PK, FK
-        varchar(16) id_document_type UK
-        varchar(12) id_document_number UK "RESTREINT"
-        char(9) cnss_number UK "NULL · RESTREINT"
+        varchar(16) id_document_type
+        varbinary(128) id_document_number "RESTREINT"
+        varbinary(128) cnss_number "NULL · RESTREINT"
         date birth_date
         varchar(16) marital_status
         tinyint dependent_children
@@ -165,11 +168,14 @@ erDiagram
         varchar(100) city
         char(5) postal_code
         varchar(100) bank_name
-        char(24) rib UK "RESTREINT"
+        varbinary(128) rib "NULL · RESTREINT"
         bigint created_by FK "auteur → accounts"
         datetime(6) created_at
         bigint updated_by FK "NULL · auteur → accounts"
         datetime(6) updated_at "NULL"
+        binary(32) id_document_index UK
+        binary(32) cnss_index UK "NULL"
+        binary(32) rib_index UK "NULL"
     }
     accounts {
         bigint id PK
@@ -514,4 +520,28 @@ erDiagram
     payroll_calculations ||--o{ settlement_ledger : "calculation_id"
     payslip_corrections |o--o{ settlement_ledger : "correction_id, calculation_id"
     recovery_requests |o--o| settlement_ledger : "recovery_id"
+```
+
+## Journalisation et audit
+
+Source : [`ERD-06-AUDIT.mmd`](ERD-06-AUDIT.mmd)
+
+```mermaid
+---
+title: SecurePayroll — Journalisation et audit
+---
+erDiagram
+    security_audit_log {
+        bigint id PK
+        datetime(6) occurred_at
+        varchar(64) event
+        enum outcome
+        enum source
+        bigint actor_account_id "NULL"
+        varchar(100) actor_label "NULL"
+        varchar(97) db_user
+        varchar(64) target_table "NULL"
+        bigint target_id "NULL"
+        json context "NULL"
+    }
 ```

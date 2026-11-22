@@ -2,7 +2,7 @@
 
 > Fichier **généré** par `python3 bin/generate-erd.py` depuis `database/migrations/*.sql`. Ne pas modifier à la main.
 
-**27 tables, 68 clés étrangères** : 34 structurelles et 34 de traçabilité (auteur d'une action, omises de la vue globale).
+**28 tables, 68 clés étrangères** : 34 structurelles et 34 de traçabilité (auteur d'une action, omises de la vue globale).
 
 Cardinalité « parent → enfant » : `1` le parent est obligatoire ; `0..1` la clé étrangère accepte NULL (avec une clé composite, MySQL ne contrôle pas la référence dès qu'une composante est NULL) ; côté enfant, `0..1` quand les colonnes de la clé étrangère contiennent une clé primaire ou unique de l'enfant.
 

@@ -8,13 +8,14 @@
 | Fichier | Contenu |
 |---|---|
 | [erd/ERD.md](erd/ERD.md) | **Tous les diagrammes**, affichés directement sur GitHub et dans l'aperçu Markdown de VS Code |
-| [erd/ERD-00-GLOBAL.mmd](erd/ERD-00-GLOBAL.mmd) | Vue globale : 26 tables, clés primaires, 33 relations structurelles |
-| [erd/ERD-01-IDENTITE-RBAC.mmd](erd/ERD-01-IDENTITE-RBAC.mmd) | Identité, données personnelles, comptes et RBAC (7 tables) |
+| [erd/ERD-00-GLOBAL.mmd](erd/ERD-00-GLOBAL.mmd) | Vue globale : 28 tables, clés primaires, 34 relations structurelles |
+| [erd/ERD-01-IDENTITE-RBAC.mmd](erd/ERD-01-IDENTITE-RBAC.mmd) | Identité, données personnelles, comptes, invitations et RBAC (8 tables) |
 | [erd/ERD-02-ORGANISATION-RH.mmd](erd/ERD-02-ORGANISATION-RH.mmd) | Départements, postes, affectations, contrats (4 tables) |
 | [erd/ERD-03-REMUNERATION.mmd](erd/ERD-03-REMUNERATION.mmd) | Demandes, décisions, conditions salariales, historique (4 tables) |
 | [erd/ERD-04-PAIE.mmd](erd/ERD-04-PAIE.mmd) | Périodes, éléments variables, calculs, bulletins, approbations (6 tables) |
 | [erd/ERD-05-REGLEMENTS.mmd](erd/ERD-05-REGLEMENTS.mmd) | Corrections, restitutions, registre des paiements (5 tables) |
-| [erd/RELATIONS.md](erd/RELATIONS.md) | Inventaire des **66 clés étrangères**, avec cardinalité et nature |
+| [erd/ERD-06-AUDIT.mmd](erd/ERD-06-AUDIT.mmd) | Piste d'audit de sécurité en ajout seul, sans clé étrangère (1 table, phase 7) |
+| [erd/RELATIONS.md](erd/RELATIONS.md) | Inventaire des **68 clés étrangères**, avec cardinalité et nature |
 | [erd/images/](erd/images/) | Rendu de chaque diagramme en **SVG** (vectoriel) et en **PNG** (résolution ×2) pour le rapport PDF |
 
 **Régénérer** après toute nouvelle migration :
@@ -25,7 +26,7 @@ python3 bin/generate-erd.py --check   # échoue si l'ERD ne correspond plus aux 
 ```
 
 Le générateur refuse de produire un ERD incohérent. Il vérifie :
-- le nombre de tables (26) ;
+- le nombre de tables (28) ;
 - la présence d'une clé primaire dans chaque table ;
 - l'existence de chaque table et colonne référencée par une clé étrangère ;
 - le rattachement de chaque table à un domaine ;
