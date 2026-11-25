@@ -131,6 +131,18 @@ def private_json(path, value):
         output.write('\n')
 
 
+def require_php():
+    """Contrôle PHP avant toute écriture : une extension absente ne se verrait sinon qu'à la connexion."""
+    probe = ("$m=array_values(array_filter(['pdo_mysql','mbstring','intl','openssl','session','ctype'],"
+             "fn($e)=>!extension_loaded($e)));"
+             "if(!defined('PASSWORD_ARGON2ID'))$m[]='argon2id';"
+             "if(PHP_VERSION_ID<80100||PHP_INT_SIZE<8)$m[]='PHP 8.1+ 64 bits';echo implode(', ',$m);")
+    result = subprocess.run(['php', '-d', 'display_errors=0', '-r', probe], capture_output=True, text=True)
+    require(result.returncode == 0, 'PHP inutilisable : PHP 8.1+ requis.')
+    require(not result.stdout.strip(), 'PHP incomplet, manque : ' + result.stdout.strip() + '. Sur Ubuntu/Debian : '
+            'sudo apt install php-cli php-mysql php-mbstring php-intl. Rien n’a été créé ; relancer ensuite.')
+
+
 class LocalInstance:
     def __init__(self, directory):
         require(os.geteuid() != 0, 'Utiliser un compte Linux ordinaire, sans sudo.')
@@ -285,7 +297,26 @@ class LocalInstance:
                 'Arrêt en cours ; conserver les fichiers, aucun arrêt forcé.')
         print('MySQL local arrêté ; données conservées.')
 
+    def refused_write_message(self):
+        """Marche à suivre exacte lorsque mysqld n'a rien pu écrire dans le répertoire privé."""
+        profile = Path('/etc/apparmor.d/usr.sbin.mysqld')
+        message = 'mysqld ne peut pas écrire dans ' + str(self.directory) + '.'
+        if not profile.is_file():
+            return message + ' Vérifier les droits et l’espace disque (voir « Dépannage » dans README.md), puis relancer.'
+        rerun = 'python3 bin/init-local.py'
+        if self.directory != ROOT / '.local':
+            rerun += ' --directory ' + str(self.directory)
+        return (message + '\nCause probable : le profil AppArmor de MySQL. Autoriser ce seul répertoire '
+                '(commandes d’administrateur), puis relancer :\n\n'
+                "  printf '  %s/ rw,\\n  %s/** rwk,\\n' " + str(self.directory) + ' ' + str(self.directory)
+                + ' | sudo tee -a /etc/apparmor.d/local/usr.sbin.mysqld\n'
+                '  sudo apparmor_parser -r ' + str(profile) + '\n'
+                '  ' + rerun + '\n\nRien n’a été créé : aucun fichier à supprimer.')
+
     def initialize(self, interactive=False):
+        require(self.data.exists() or not (self.directory / 'credentials.json').exists(),
+                'Essai antérieur interrompu avant la création de la base. Après vérification (ls -la '
+                + str(self.directory) + '), supprimer ce répertoire puis relancer.')
         require(not self.directory.exists(), 'Répertoire déjà présent : aucun rejeu de migration. Utiliser start ou serve.')
         for executable in ['mysql', 'php']:
             require(shutil.which(executable), executable + ' absent.')
@@ -294,9 +325,20 @@ class LocalInstance:
         version = subprocess.run([daemon, '--no-defaults', '--version'], capture_output=True,
                                  text=True, check=True).stdout
         require(re.search(r'\b8\.4\.', version), 'MySQL 8.4 requis (pas MariaDB).')
+        require_php()
         for path in SOURCES + DEMO_SEEDS:
             require((ROOT / path).is_file(), 'Source SQL manquante : ' + path)
         self.directory.mkdir(mode=0o700, parents=False)
+        # Le datadir d'abord : un refus d'AppArmor survient avant toute saisie et tout secret.
+        result = subprocess.run([daemon, '--no-defaults', '--initialize-insecure',
+                                 '--datadir=' + str(self.data),
+                                 '--log-error=' + str(self.directory / 'initialize.log')],
+                                env=clean_environment(), capture_output=True, timeout=120)
+        if result.returncode and not any(self.directory.iterdir()):
+            # Rien écrit, pas même le journal. rmdir n'efface qu'un répertoire vide, celui créé ci-dessus.
+            self.directory.rmdir()
+            raise RuntimeError(self.refused_write_message())
+        require(result.returncode == 0, 'Initialisation échouée ; répertoire conservé, ne pas rejouer.')
         (self.directory / 'runtime').mkdir(mode=0o700)
         credentials = {}
         for login in ['svc_php', *ROLES]:
@@ -315,15 +357,6 @@ class LocalInstance:
         root_password = secrets.token_urlsafe(32)
         # Conserver le secret avant son attribution pour diagnostiquer un échec sans le perdre.
         private_json(self.directory / 'admin.json', {'password': root_password})
-        result = subprocess.run([daemon, '--no-defaults', '--initialize-insecure',
-                                 '--datadir=' + str(self.data),
-                                 '--log-error=' + str(self.directory / 'initialize.log')],
-                                env=clean_environment(), capture_output=True, timeout=120)
-        # mysqld sans journal créé : cas typique du profil AppArmor Ubuntu/MySQL.
-        require(result.returncode == 0 or (self.directory / 'initialize.log').exists(),
-                'mysqld ne peut pas écrire dans ' + str(self.directory) + ' (AppArmor probable : '
-                'voir « Dépannage » dans README.md). Répertoire conservé, ne pas rejouer.')
-        require(result.returncode == 0, 'Initialisation échouée ; répertoire conservé, ne pas rejouer.')
         try:
             self.start()
             self.sql("ALTER USER 'root'@'localhost' IDENTIFIED BY " + quote(root_password) + ';')

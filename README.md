@@ -6,7 +6,7 @@ Chaque collaborateur utilise **ses données, son instance MySQL et ses mots de p
 
 ## Prérequis
 
-- Linux, Python **3.10+**, PHP **8.1+** en 64 bits avec `pdo_mysql`, sessions et `PASSWORD_ARGON2ID`.
+- Linux, Python **3.10+**, PHP **8.1+** en 64 bits avec `pdo_mysql`, `mbstring`, `intl`, `openssl`, sessions et `PASSWORD_ARGON2ID`.
 - **MySQL Community Server 8.4**, exécutables `mysql` et `mysqld` (`/usr/sbin/mysqld` est également détecté). MariaDB n’est pas compatible.
 - Git et un compte Linux ordinaire. **Ne pas exécuter l’initialisation avec sudo.** L’installation des logiciels système relève de l’administrateur du poste.
 - Aucun Composer, npm ou service cloud requis. Windows natif et macOS ne sont pas testés.
@@ -15,7 +15,7 @@ Sur un poste Ubuntu/Debian neuf, les dépendances PHP peuvent être installées 
 
 ```bash
 sudo apt update
-sudo apt install git python3 php-cli php-mysql
+sudo apt install git python3 php-cli php-mysql php-mbstring php-intl
 ```
 
 Pour MySQL, sélectionner la série **8.4 LTS** dans le [guide officiel du dépôt APT MySQL](https://dev.mysql.com/doc/mysql-apt-repo-quick-guide/en/) avant d’installer `mysql-server`. Ne pas remplacer ou mettre à niveau une installation MySQL existante à l’aveugle. Si MySQL 8.4 est déjà disponible, aucune installation ni modification du service système n’est nécessaire pour ce projet. Les commandes d’installation de paquets ci-dessus concernent le poste du collaborateur et n’ont pas été exécutées sur la VM d’origine. Référence PHP : [installation des paquets PHP et MySQL sur Debian/Ubuntu](https://www.php.net/manual/en/install.unix.debian.php).
@@ -40,6 +40,18 @@ Le dépôt est public ; le cloner directement suffit. Aucune donnée MySQL ni au
 ```bash
 git clone https://github.com/Renzo0023/secure_payroll_project.git
 cd secure_payroll_project
+```
+
+**Ubuntu, une seule fois par clone.** Le profil AppArmor de MySQL limite `mysqld` à `/var/lib/mysql` et `/tmp` : sans l’étape suivante, l’installation est refusée. Elle autorise **uniquement** le répertoire privé de ce clone et se lance depuis la racine du projet (elle utilise `$PWD`). À ignorer si `/etc/apparmor.d/usr.sbin.mysqld` n’existe pas ; à refaire si le dossier est déplacé ou renommé.
+
+```bash
+printf '  %s/ rw,\n  %s/** rwk,\n' "$PWD/.local" "$PWD/.local" | sudo tee -a /etc/apparmor.d/local/usr.sbin.mysqld
+sudo apparmor_parser -r /etc/apparmor.d/usr.sbin.mysqld
+```
+
+Puis, **sans sudo** :
+
+```bash
 python3 bin/init-local.py
 ```
 
@@ -141,6 +153,7 @@ php tests/onboarding-unit.php
 php tests/secure-coding-static.php
 php tests/field-cipher-unit.php
 python3 bin/generate-erd.py --check
+PYTHONDONTWRITEBYTECODE=1 python3 tests/install-preflight.py
 ```
 
 Recette réelle du nouvel installateur :
@@ -220,14 +233,9 @@ L’audit contrôle les fichiers publiables, l’index et tous les objets Git sa
 - Erreur 503 sur toutes les pages après la mise à jour de la phase 2 : l’instance `.local/` date d’avant les rôles MySQL. La conserver sous un autre nom et en installer une neuve (nouveaux mots de passe, jeu fictif remis à zéro) : `python3 bin/init-local.py stop && mv .local .local.avant-phase2 && python3 bin/init-local.py init`.
 - Lire en privé `.local/initialize.log`, `.local/mysql.log` et `.local/runtime/application.log`. Ne jamais partager `admin.json`, `application.json`, `credentials.json` ou `operators.json`.
 - MySQL absent/autre version : installer MySQL 8.4, pas MariaDB.
-- « mysqld ne peut pas écrire… (AppArmor probable) » : sur Ubuntu, le profil AppArmor `/usr/sbin/mysqld` limite le serveur à `/var/lib/mysql` et `/tmp`. Le refus est visible avec `journalctl -k | grep 'apparmor="DENIED".*mysqld'`. L’administrateur du poste autorise alors **uniquement** le répertoire privé du clone, dans le fichier local prévu par le profil, puis recharge celui-ci (commande à lancer depuis la racine `secure_payroll_project/`, car elle utilise `$PWD`) :
-
-  ```bash
-  printf '  %s/ rw,\n  %s/** rwk,\n' "$PWD/.local" "$PWD/.local" | sudo tee -a /etc/apparmor.d/local/usr.sbin.mysqld
-  sudo apparmor_parser -r /etc/apparmor.d/usr.sbin.mysqld
-  ```
-
-  Ne pas désactiver AppArmor ni passer le profil en mode `complain`. Le `.local/` de l’essai refusé ne contient que des secrets jamais utilisés, sans datadir : après vérification (`ls -la .local`), le supprimer, puis relancer `python3 bin/init-local.py`.
+- « mysqld ne peut pas écrire dans … » : l’étape AppArmor de « Installation locale » n’a pas été faite, ou le clone a été déplacé. Le message affiche les commandes exactes pour ce répertoire ; les lancer puis relancer l’installation. Le refus est visible avec `journalctl -k | grep 'apparmor="DENIED".*mysqld'`. Ne pas désactiver AppArmor ni passer le profil en mode `complain`.
+- « Essai antérieur interrompu avant la création de la base » : reste d’un refus AppArmor avec une ancienne version de l’installateur. Ce `.local/` ne contient que des secrets jamais utilisés, sans `data/` : après vérification (`ls -la .local`), le supprimer, puis relancer.
+- « PHP incomplet, manque : … » : installer le paquet indiqué (sur Ubuntu, `mbstring` et `intl` sont fournis par `php-mbstring` et `php-intl`, séparément de `php-cli`), puis relancer.
 - Chemin trop long ou avec espaces : choisir un clone à chemin court, ou un répertoire privé **neuf** via `--directory /CHEMIN/COURT`. Réutiliser cette option pour toutes les commandes ; ne jamais choisir un datadir existant.
 - Ne pas importer un dump, lancer les anciennes commandes `activate-*` ou désactiver des triggers pour contourner un échec.
 
